@@ -59,6 +59,7 @@ int main()
 	SDL_Rect cell_rect = { 320, 320, 24, 24 };
 
 	generate_bombs(board, 16, 30, 99, 480);
+	generate_numbers(board, 16, 30);
 
 	SDL_bool running = SDL_TRUE;
 	while (running)

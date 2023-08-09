@@ -46,7 +46,37 @@ void generate_bombs(int board[18][32], int row, int colum, int bomb_number, int 
 
 void generate_numbers(int board[18][32], int row, int colum)
 {
+	int i, j, bomb_counter;
 
+	for (i = 1; i <= row; i++)
+	{	
+		for (j = 1; j <= colum; j++)
+		{
+			bomb_counter = 0;
+			if (board[i][j] == 0)
+			{
+				if (board[i-1][j-1] == 11) bomb_counter += 1;
+				if (board[i-1][j] == 11) bomb_counter += 1;
+				if (board[i-1][j+1] == 11) bomb_counter += 1;
+				if (board[i][j+1] == 11) bomb_counter += 1;
+				if (board[i+1][j+1] == 11) bomb_counter += 1;
+				if (board[i+1][j] == 11) bomb_counter += 1;
+				if (board[i+1][j-1] == 11) bomb_counter += 1;
+				if (board[i][j-1] == 11) bomb_counter += 1;
+
+				if (bomb_counter == 0) board[i][j] = 0;
+				if (bomb_counter == 1) board[i][j] = 1;
+				if (bomb_counter == 2) board[i][j] = 2;
+				if (bomb_counter == 3) board[i][j] = 3;
+				if (bomb_counter == 4) board[i][j] = 4;
+				if (bomb_counter == 5) board[i][j] = 5;
+				if (bomb_counter == 6) board[i][j] = 6;
+				if (bomb_counter == 7) board[i][j] = 7;
+				if (bomb_counter == 8) board[i][j] = 8;
+			}
+			else board[i][j] = 11;
+		}
+	}
 }
 
 
@@ -79,7 +109,38 @@ void render_board(SDL_Renderer* renderer, SDL_Texture* texture,
 					image_rect.x = 0;
 					SDL_RenderCopy(renderer, texture, &image_rect, &cell_rect);
 					break;	
-
+				case 1:
+					image_rect.x = 24;
+					SDL_RenderCopy(renderer, texture, &image_rect, &cell_rect);
+					break;	
+				case 2:
+					image_rect.x = 48;
+					SDL_RenderCopy(renderer, texture, &image_rect, &cell_rect);
+					break;	
+				case 3:
+					image_rect.x = 72;
+					SDL_RenderCopy(renderer, texture, &image_rect, &cell_rect);
+					break;	
+				case 4:
+					image_rect.x = 96;
+					SDL_RenderCopy(renderer, texture, &image_rect, &cell_rect);
+					break;	
+				case 5:
+					image_rect.x = 120;
+					SDL_RenderCopy(renderer, texture, &image_rect, &cell_rect);
+					break;	
+				case 6:
+					image_rect.x = 144;
+					SDL_RenderCopy(renderer, texture, &image_rect, &cell_rect);
+					break;	
+				case 7:
+					image_rect.x = 168;
+					SDL_RenderCopy(renderer, texture, &image_rect, &cell_rect);
+					break;	
+				case 8:
+					image_rect.x = 192;
+					SDL_RenderCopy(renderer, texture, &image_rect, &cell_rect);
+					break;	
 				case 11:
 					image_rect.x = 264;
 					SDL_RenderCopy(renderer, texture, &image_rect, &cell_rect);
