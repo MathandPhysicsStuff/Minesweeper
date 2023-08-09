@@ -50,13 +50,15 @@ int main()
 	if ((init_status & flags) != flags) { printf("image init error\n"); }
 
 	SDL_Surface* image;
-	image = IMG_Load("spriteSheet7.png");
+	image = IMG_Load("spriteSheet8.png");
 	if (!image) { printf("Image not loaded.\n"); }
 
 	SDL_Texture* texturePGN = SDL_CreateTextureFromSurface(renderer, image);
 
 	SDL_Rect image_rect = { 72, 0, 24, 24 };
 	SDL_Rect cell_rect = { 320, 320, 24, 24 };
+
+	generate_bombs(board, 16, 30, 99, 480);
 
 	SDL_bool running = SDL_TRUE;
 	while (running)
