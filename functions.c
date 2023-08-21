@@ -1,5 +1,87 @@
 #include "functions.h"
 
+void enqueue(coord *queue, int length, int *count, coord values)
+{
+	queue[*count] = values;
+	*count += 1;
+}
+
+coord dequeue(coord *queue, int length, int *count)
+{
+	coord temp = queue[0];
+
+	for (int i = 0; i < *count; i++)
+	{
+		queue[i] = queue[i+1];
+	}
+	*count -= 1;
+	return temp;
+}
+
+void floodfill(int board[18][32], int tiles[18][32], int length, int i, int j, int new_tile)
+{
+	int old_tile = tiles[i][j];
+
+	if (old_tile == new_tile) 
+	{
+		return;
+	}
+
+	coord queue[length];
+	int count = 0;
+
+	coord cell = { i, j };
+	enqueue(queue, length, &count, cell);
+
+	while (count > 0)
+	{
+		cell = dequeue(queue, length, &count);
+		i = cell.x, j = cell.y;
+
+		if (i < 1 || j < 1 || i >= 17 || j >= 31 || tiles[i][j] != old_tile || board[i][j] == 11)
+		{
+			continue;
+		}
+
+		else if (board[i][j] > 0 && board[i][j] < 9)
+		{
+			tiles[i][j] = new_tile;
+			continue;	
+		}
+
+		else
+		{
+			tiles[i][j] = new_tile;
+
+			cell.x = i+1, cell.y = j;
+			enqueue(queue, length, &count, cell);
+
+			cell.x = i-1, cell.y = j;
+			enqueue(queue, length, &count, cell);
+
+			cell.x = i, cell.y = j+1;
+			enqueue(queue, length, &count, cell);
+
+			cell.x = i, cell.y = j-1;
+			enqueue(queue, length, &count, cell);
+
+			cell.x = i-1, cell.y = j-1;
+			enqueue(queue, length, &count, cell);
+
+			cell.x = i-1, cell.y = j+1;
+			enqueue(queue, length, &count, cell);
+
+			cell.x = i+1, cell.y = j-1;
+			enqueue(queue, length, &count, cell);
+
+			cell.x = i+1, cell.y = j+1;
+			enqueue(queue, length, &count, cell);
+
+
+		}
+	}
+}
+
 void generate_bombs(int board[18][32], int row, int colum, int bomb_number, int bomb_range)
 {
 	srand(time(NULL));
@@ -79,13 +161,87 @@ void generate_numbers(int board[18][32], int row, int colum)
 	}
 }
 
-
-void render_board(SDL_Renderer* renderer, SDL_Texture* texture,
-				  SDL_Rect image_rect, SDL_Rect cell_rect,
-				  int board[18][32], int row, int colum)
+void board_logic(SDL_Event event, SDL_Rect cell_rect, SDL_Point mouse, GameState *game_state,
+				 int board[18][32], int tiles[18][32], int row, int colum)
 {
 	int i, j;
-	int state = 0;
+	int new_tile = 0;
+	int length = 480;
+	
+	cell_rect.x = 0;
+	cell_rect.y = 92;
+	cell_rect.w = 24;
+	cell_rect.h = 24;
+
+	for (i = 1; i <= row; i++)
+	{
+		
+		cell_rect.x = 4;
+		for (j = 1; j <= colum; j++)
+		{
+			if(event.button.button == SDL_BUTTON_LEFT && tiles[i][j] != 2 && game_state->gameover == SDL_FALSE)
+			{
+				if (SDL_PointInRect(&mouse, &cell_rect))
+				{
+					if (board[i][j] == 11) 
+					{ 
+						tiles[i][j] = 0;
+						board[i][j] = 12;
+						game_state->gameover = SDL_TRUE;
+
+						for (int i = 1; i <= 16; i++)
+						{
+							for (int j = 1; j <= 30; j++)
+							{
+								if (board[i][j] == 11 && tiles[i][j] != 2)
+								{
+									tiles[i][j] = 0;
+								}
+							}
+						}
+					}
+
+					if (0 < board[i][j]  && board[i][j] < 8)
+					{
+						tiles[i][j] = 0;
+					}
+
+					if (board[i][j] == 0)
+					{
+						floodfill(board, tiles, length, i, j, new_tile);
+					}
+				}
+			}
+			
+			if(event.button.button == SDL_BUTTON_RIGHT && tiles[i][j] != 0 && game_state->gameover == SDL_FALSE)
+			{
+				if (SDL_PointInRect(&mouse, &cell_rect))
+				{
+					if (tiles[i][j] == 1)
+					{
+						tiles[i][j] = 2;
+					}
+					else if (tiles[i][j] == 2)
+					{
+						tiles[i][j] = 1;
+					}
+				}
+			}
+
+			cell_rect.x += 24;
+		}
+		cell_rect.y += 24;
+	}
+}
+
+
+void render_board(SDL_Renderer* renderer, SDL_Texture* texture,
+				  SDL_Rect image_rect, SDL_Rect cell_rect, SDL_Rect tile_rect,
+				  int board[18][32], int tiles[18][32], int row, int colum)
+{
+	int i, j;
+	int board_state = 0;
+	int tile_state = 0;
 
 	image_rect.x = 24;
 	image_rect.y = 0;
@@ -94,7 +250,11 @@ void render_board(SDL_Renderer* renderer, SDL_Texture* texture,
 
 	cell_rect.y = 92;
 	cell_rect.w = 24;
-	cell_rect.w = 24;
+	cell_rect.h = 24;
+
+	tile_rect.x = 216;
+	tile_rect.w = 24;
+	tile_rect.h = 24;
 
 	for (i = 1; i <= row; i++)
 	{
@@ -102,8 +262,8 @@ void render_board(SDL_Renderer* renderer, SDL_Texture* texture,
 		cell_rect.x = 4;
 		for (j = 1; j <= colum; j++)
 		{
-			state = board[i][j];
-			switch (state)
+			board_state = board[i][j];
+			switch (board_state)
 			{
 				case 0:
 					image_rect.x = 0;
@@ -144,7 +304,26 @@ void render_board(SDL_Renderer* renderer, SDL_Texture* texture,
 				case 11:
 					image_rect.x = 264;
 					SDL_RenderCopy(renderer, texture, &image_rect, &cell_rect);
+					break;
+				case 12:
+					image_rect.x = 288;
+					SDL_RenderCopy(renderer, texture, &image_rect, &cell_rect);
 					break;	
+			}
+
+			tile_state = tiles[i][j];
+			switch (tile_state)
+			{
+				case 0:
+					break;
+				case 1:
+					tile_rect.x = 216;
+					SDL_RenderCopy(renderer, texture, &tile_rect, &cell_rect);
+					break;
+				case 2:
+					tile_rect.x = 240;
+					SDL_RenderCopy(renderer, texture, &tile_rect, &cell_rect);
+					break;
 			}
 			cell_rect.x += 24;
 		}

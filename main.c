@@ -1,9 +1,14 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "SDL2/SDL.h"
 #include "SDL2/SDL_image.h"
 
 #include "functions.h"
+
+#define ROWS 18
+#define COLUMS 32 
 
 static SDL_Window *window = NULL;
 static SDL_Renderer *renderer = NULL;
@@ -29,6 +34,9 @@ typedef enum CellStates
 } CellStates;
 
 int board[18][32];
+int tiles[18][32];
+int test[18][32];
+
 
 int main()
 {
@@ -50,16 +58,31 @@ int main()
 	if ((init_status & flags) != flags) { printf("image init error\n"); }
 
 	SDL_Surface* image;
-	image = IMG_Load("spriteSheet8.png");
+	image = IMG_Load("tile_set.png");
 	if (!image) { printf("Image not loaded.\n"); }
 
 	SDL_Texture* texturePGN = SDL_CreateTextureFromSurface(renderer, image);
 
-	SDL_Rect image_rect = { 72, 0, 24, 24 };
-	SDL_Rect cell_rect = { 320, 320, 24, 24 };
+	SDL_Rect image_rect = { 0, 0, 24, 24 };
+	SDL_Rect cell_rect = { 0, 0, 24, 24 };
+	SDL_Rect tile_rect = { 0, 0, 24, 24 };
 
-	generate_bombs(board, 16, 30, 99, 480);
-	generate_numbers(board, 16, 30);
+
+	for (int i = 1; i <= 16; i++)
+	{
+		for (int j = 1; j <= 30; j++)
+		{
+			tiles[i][j] = 1;
+		}
+	}
+
+	GameState game_state = {
+							.reset = SDL_TRUE,
+							.gameover = SDL_FALSE
+						   };	
+
+	//generate_bombs(board, 16, 30, 99, 480);
+	//generate_numbers(board, 16, 30);
 
 	SDL_bool running = SDL_TRUE;
 	while (running)
@@ -67,18 +90,51 @@ int main()
 		SDL_Event event;
 		while (SDL_PollEvent(&event))
 		{
+			SDL_Point mouse = { event.button.x, event.button.y };
+
 			if (event.type == SDL_QUIT)
 			{
 				running = SDL_FALSE;
 				break;
 			}
+
+			if (event.type == SDL_MOUSEBUTTONUP)
+			{
+				board_logic(event, cell_rect, mouse, &game_state, board, tiles, 16, 30);
+			}
+
+			if (event.type == SDL_KEYDOWN)
+			{
+				switch (event.key.keysym.sym)
+				{
+					case SDLK_r:
+						game_state.reset = SDL_TRUE;
+
+						for (int i = 1; i <= 16; i++)
+						{
+							for (int j = 1; j <= 30; j++)
+							{
+								tiles[i][j] = 1;
+							}
+						}
+						break;
+				}
+			}
+		}
+
+		if (game_state.reset == SDL_TRUE)
+		{
+			generate_bombs(board, 16, 30, 99, 480);
+			generate_numbers(board, 16, 30);
+
+			game_state.reset = SDL_FALSE;
+			game_state.gameover = SDL_FALSE;
 		}
 
 		SDL_SetRenderDrawColor(renderer, 128, 128, 128, 255);
 		SDL_RenderClear(renderer);
 
-		render_board(renderer, texturePGN, image_rect, cell_rect, board, 16, 30);
-		//SDL_RenderCopy(renderer, texturePGN, &image_rect, &cell_rect);
+		render_board(renderer, texturePGN, image_rect, tile_rect, cell_rect, board, tiles, 16, 30);
 
 		SDL_RenderPresent(renderer);
 		SDL_Delay(100);
